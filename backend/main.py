@@ -8,25 +8,25 @@ from fastapi import UploadFile
 import numpy as np
 from PIL import Image
 
-# import config
-# import inference
+import config
+import inference
 
 app = FastAPI()
 
 
-# @app.get("/")
-# def read_root():
-#     return {"message": "Welcome from the API"}
-#
-#
-# @app.post("/{style}")
-# def get_image(style: str, file: UploadFile = File(...)):
-#     image = np.array(Image.open(file.file))
-#     model = config.STYLES[style]
-#     output, resized = inference.inference(model, image)
-#     name = f"/storage/{str(uuid.uuid4())}.jpg"
-#     cv2.imwrite(name, output)
-#     return {"name": name}
+@app.get("/")
+def read_root():
+    return {"message": "Welcome from the API"}
+
+
+@app.post("/{style}")
+def get_image(style: str, file: UploadFile = File(...)):
+    image = np.array(Image.open(file.file))
+    model = config.STYLES[style]
+    output, resized = inference.inference(model, image)
+    name = f"/storage/{str(uuid.uuid4())}.jpg"
+    cv2.imwrite(name, output)
+    return {"name": name}
 
 
 if __name__ == "__main__":
