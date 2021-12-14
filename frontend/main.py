@@ -18,7 +18,7 @@ STYLES = {
 
 st.set_option("deprecation.showfileUploaderEncoding", False)
 
-st.title("Color Detection Web APP")
+st.title("Image Color Detection Web APP")
 
 image = st.file_uploader("Choose an image")
 
