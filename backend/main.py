@@ -44,6 +44,10 @@ async def get_image(style: str, file: UploadFile = File(...)):
     asyncio.create_task(generate_remaining_models(models, image, name))
     return {"name": name, "time": time.time() - start}
 
+#get x,y,image, call mouse_click function, then call recognize_color return the colorname
+# @app.post("/detectcolor")
+# async def detect_color():
+
 
 async def generate_remaining_models(models, image, name: str):
     executor = ProcessPoolExecutor()
