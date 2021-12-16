@@ -1,4 +1,4 @@
-FROM python:3.8-slim
+FROM python:3.10.1-slim
 
 WORKDIR /app
 
@@ -8,9 +8,8 @@ RUN apt-get install \
     'libsm6'\
     'libxext6'  -y
 
-COPY requirements.txt .
+COPY . .
 RUN pip install -r requirements.txt
 
-COPY . .
 
 CMD ["python", "main.py"]
