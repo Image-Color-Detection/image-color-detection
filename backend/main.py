@@ -1,19 +1,19 @@
-import asyncio
-import time
-import uuid
-from concurrent.futures import ProcessPoolExecutor
-from functools import partial
-
 import cv2
 import uvicorn
 from fastapi import File
 from fastapi import FastAPI
 from fastapi import UploadFile
-import numpy as np
+from pydantic import BaseModel
 from PIL import Image
 
-import config
-import inference
+
+import colorDetector
+
+
+class colorDetect(BaseModel):
+    x: list
+    y: list
+    image_name: str
 
 
 app = FastAPI()
@@ -24,45 +24,26 @@ def read_root():
     return {"message": "Welcome from the API"}
 
 
-async def combine_images(output, resized, name):
-    final_image = np.hstack((output, resized))
-    cv2.imwrite(name, final_image)
+# save the image file
+@app.post("/upload")
+async def get_image(file: UploadFile = File(...)):
+    image = Image.open(file.file).convert('RGB')
+    try:
+        image.save(f"./storage/{file.filename}")
+        return {"status": "success", "message": "Uploaded Successfully", "filename": file.filename}
+    except OSError as e:
+        return {"status": "failed", "message": "Uploaded Failed retry again\n" + str(e), "filename": file.filename}
 
 
-@app.post("/{style}")
-async def get_image(style: str, file: UploadFile = File(...)):
-    image = np.array(Image.open(file.file))
-    model = config.STYLES[style]
-    start = time.time()
-    output, resized = inference.inference(model, image)
-    name = f"/storage/{str(uuid.uuid4())}.jpg"
-    print(f"name: {name}")
-    # name = file.file.filename
-    cv2.imwrite(name, output)
-    models = config.STYLES.copy()
-    del models[style]
-    asyncio.create_task(generate_remaining_models(models, image, name))
-    return {"name": name, "time": time.time() - start}
-
-#get x,y,image, call mouse_click function, then call recognize_color return the colorname
-# @app.post("/detectcolor")
-# async def detect_color():
-
-
-async def generate_remaining_models(models, image, name: str):
-    executor = ProcessPoolExecutor()
-    event_loop = asyncio.get_event_loop()
-    await event_loop.run_in_executor(
-        executor, partial(process_image, models, image, name)
-    )
-
-
-def process_image(models, image, name: str):
-    for model in models:
-        output, resized = inference.inference(models[model], image)
-        name = name.split(".")[0]
-        name = f"{name.split('_')[0]}_{models[model]}.jpg"
-        cv2.imwrite(name, output)
+# get x,y,image_name return the color name
+@app.post("/detect")
+async def detect_color(body: colorDetect):
+    img = cv2.imread(f"./storage/{body.image_name}")
+    color_names = []
+    for index, value in enumerate(body.x):
+        r, g, b = colorDetector.mouse_click(int(value), int(body.y[index]), img)
+        color_names.append(colorDetector.recognize_color(r, g, b))
+    return {"color_names": color_names}
 
 
 if __name__ == "__main__":

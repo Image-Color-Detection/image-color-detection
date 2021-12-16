@@ -1,52 +1,54 @@
-import time
-
 import requests
+import numpy as np
+import pandas as pd
 import streamlit as st
 from PIL import Image
+from streamlit_drawable_canvas import st_canvas
+import cv2
 
-STYLES = {
-    "candy": "candy",
-    "composition 6": "composition_vii",
-    "feathers": "feathers",
-    "la_muse": "la_muse",
-    "mosaic": "mosaic",
-    "starry night": "starry_night",
-    "the scream": "the_scream",
-    "the wave": "the_wave",
-    "udnie": "udnie",
-}
+index = ["color", "color_name", "hex", "R", "G", "B"]
+csv = pd.read_csv('/Users/zeal/Desktop/Lambton/TermProject/frontend/colors.csv', names=index, header=None)
+
+uploaded = False
 
 st.set_option("deprecation.showfileUploaderEncoding", False)
 
-st.title("Image Color Detection Web APP")
+st.title("Image Color Detection Web Application")
 
 image = st.file_uploader("Choose an image")
 
-style = st.selectbox("Choose the style", [i for i in STYLES.keys()])
+if image is not None:
+    files = {"file": (image.name, image.getvalue())}
+    if not uploaded:
+        res = requests.post(f"http://0.0.0.0:8080/upload", files=files)
+        st.title(res.json()['message'])
+        if res.json()['status'] == "success":
+            uploaded = True
+        else:
+            uploaded = False
 
-if st.button("Style Transfer"):
-    if image is not None and style is not None:
-        files = {"file": image.getvalue()}
-        res = requests.post(f"http://0.0.0.0:8080/{style}", files=files)
-        img_path = res.json()
-        image = Image.open(img_path.get("name"))
-        st.image(image)
+    if uploaded:
+        bg_image = Image.open(image)
+        width, height = bg_image.size
 
-        displayed_styles = [style]
-        displayed = 1
-        total = len(STYLES)
+        img_1 = cv2.cvtColor(np.array(bg_image.convert('RGB')), cv2.COLOR_RGB2BGR)
 
-        st.write("Generating other models...")
+        canvas_result = st_canvas(
+            stroke_width=3,
+            background_image=bg_image,
+            height=height,
+            width=width,
+            drawing_mode="circle",
+            key="color_annotation_app",
+        )
+        df = pd.json_normalize(canvas_result.json_data["objects"])
 
-        while displayed < total:
-            for style in STYLES:
-                if style not in displayed_styles:
-                    try:
-                        path = f"{img_path.get('name').split('.')[0]}_{STYLES[style]}.jpg"
-                        image = Image.open(path)
-                        st.image(image, width=500)
-                        time.sleep(1)
-                        displayed += 1
-                        displayed_styles.append(style)
-                    except:
-                        pass
+        if df.size > 0:
+            detect_resp = requests.post(f"http://0.0.0.0:8080/detect",
+                                        json={"x": df['left'].tolist(),
+                                              "y": df['top'].tolist(),
+                                              "image_name": res.json()['filename']
+                                              })
+
+            df['color_name'] = pd.Series(detect_resp.json()['color_names'])
+            st.dataframe(df[['left', 'top', 'color_name']])

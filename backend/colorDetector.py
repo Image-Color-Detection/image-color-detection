@@ -1,12 +1,7 @@
-import numpy as np
 import pandas as pd
-import cv2
 
 index = ["color", "color_name", "hex", "R", "G", "B"]
 csv = pd.read_csv('colors.csv', names=index, header=None)
-
-clicked = False
-r = g = b = xpos = ypos = 0
 
 
 def recognize_color(R, G, B):
@@ -19,15 +14,8 @@ def recognize_color(R, G, B):
     return cname
 
 
-def mouse_click(x, y, flags, param, img):
-    global b, g, r, xpos, ypos, clicked
-    clicked = True
-    xpos = x
-    ypos = y
-    b, g, r = img[y, x]
-    b = int(b)
-    g = int(g)
-    r = int(r)
-    return int(r), int(g), int(b)
+def mouse_click(x, y, img):
+    B, G, R = img[y, x]
+    return int(R), int(G), int(B)
 
 
