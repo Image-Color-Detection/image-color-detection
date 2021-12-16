@@ -6,9 +6,6 @@ from PIL import Image
 from streamlit_drawable_canvas import st_canvas
 import cv2
 
-index = ["color", "color_name", "hex", "R", "G", "B"]
-csv = pd.read_csv('/Users/zeal/Desktop/Lambton/TermProject/frontend/colors.csv', names=index, header=None)
-
 uploaded = False
 
 st.set_option("deprecation.showfileUploaderEncoding", False)
@@ -30,8 +27,6 @@ if image is not None:
     if uploaded:
         bg_image = Image.open(image)
         width, height = bg_image.size
-
-        img_1 = cv2.cvtColor(np.array(bg_image.convert('RGB')), cv2.COLOR_RGB2BGR)
 
         canvas_result = st_canvas(
             stroke_width=3,
