@@ -3,10 +3,11 @@ import pandas as pd
 import streamlit as st
 from PIL import Image
 from streamlit_drawable_canvas import st_canvas
+import os
 
 uploaded = False
 
-# st.set_option("deprecation.showfileUploaderEncoding", False)
+url = os.environ.get("URL")
 
 st.title("Image Color Detection Web Application")
 
@@ -15,7 +16,7 @@ image = st.file_uploader("Choose an image")
 if image is not None:
     files = {"file": (image.name, image.getvalue())}
     if not uploaded:
-        res = requests.post(f"http://0.0.0.0:8080/upload", files=files)
+        res = requests.post(f"{url}upload", files=files)
         st.title(res.json()['message'])
         if res.json()['status'] == "success":
             uploaded = True
@@ -37,7 +38,7 @@ if image is not None:
         df = pd.json_normalize(canvas_result.json_data["objects"])
 
         if df.size > 0:
-            detect_resp = requests.post(f"http://0.0.0.0:8080/detect",
+            detect_resp = requests.post(f"{url}detect",
                                         json={"x": df['left'].tolist(),
                                               "y": df['top'].tolist(),
                                               "image_name": res.json()['filename']

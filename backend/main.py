@@ -5,6 +5,7 @@ from fastapi import FastAPI
 from fastapi import UploadFile
 from pydantic import BaseModel
 from PIL import Image
+import os
 
 
 import colorDetector
@@ -47,4 +48,4 @@ async def detect_color(body: colorDetect):
 
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8080)
+    uvicorn.run("main:app", host="0.0.0.0", port=os.environ.get("PORT"))
